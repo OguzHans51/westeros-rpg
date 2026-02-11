@@ -41,7 +41,18 @@ if not st.session_state.game_started:
     with col1:
         char_name = st.text_input("Karakter Adı", placeholder="Örn: Brienne of Tarth")
         char_house = st.text_input("Hanesi", placeholder="Tarth")
-        
+        st.markdown("---")
+        st.subheader("⏳ Zaman Ayarı")
+        era_select = st.selectbox("Hangi Dönem?", [
+            "Game of Thrones (Ana Seri - 298 AC)",
+            "Robert'ın İsyanı (282 AC)",
+            "Ejderhaların Dansı (129 AC)",
+            "Aegon'un Fethi (2 BC)",
+            "Blackfyre İsyanı (196 AC)",
+            "Diğer / Özel Tarih"
+        ])
+        custom_year = st.text_input("Tam Yıl (İsteğe Bağlı)", placeholder="Örn: 300 AC")
+
         st.markdown("---")
         st.subheader("⚔️ Savaş Bonusu")
         combat_stat = st.slider("Savaş Yeteneği", 0, 10, 5, key="stat_combat", help="0: Köylü, 5: Asker, 10: Arthur Dayne")
@@ -62,22 +73,28 @@ if not st.session_state.game_started:
         if not char_name or "BURAYA" in DEFAULT_DEEPSEEK_KEY:
             st.warning("Eksik bilgi veya API Key!")
         else:
+            final_time = f"{era_select}"
+            if custom_year:
+                final_time += f" (Yıl: {custom_year})"
             st.session_state.char_info = {
-                "name": char_name, "house": char_house, 
+                "name": char_name, "house": char_house,
                 "class": char_class, "gender": gender,
                 "combat": combat_stat, "intellect": intellect_stat,
-                "is_canon": is_canon
+                "is_canon": is_canon, 
+                "era": final_time
             }
             
             canon_note = "Bu bir CANON karakterdir, tarihine sadık kal." if is_canon else "Bu orijinal bir karakterdir."
 
             system_prompt = f"""
-            Sen Westeros'ta acımasız ve gerçekçi bir GM'sin.
+            Sen Westeros'ta acımasız ve tarihine sadık bir GM'sin.
             
+            DÖNEM/YIL: {final_time} (ÇOK ÖNEMLİ: Hikayeyi, kralları ve olayları bu yıla göre kur.)
             OYUNCU: {char_name} ({gender}, {char_house}, {char_class})
             YETENEKLER: Savaş +{combat_stat} | Zeka +{intellect_stat}
             DURUM: {canon_note}
-            
+            GEÇMİŞ: {char_bg}
+
             KURALLAR:
             1. **DİL:** Kusursuz Türkçe kullan.
             2. **HİTAP:** Oyuncunun cinsiyetine ({gender}) uygun hitap et (Lord/Lady, Ser/Dame, Prens/Prenses).
@@ -87,8 +104,9 @@ if not st.session_state.game_started:
                - Skor 16-24: Büyük başarı.
                - Skor 25+: Efsanevi başarı.
                - Hedefin gücüne göre bu skoru yorumla.
-            4. Lore terimlerini (Winterfell, King's Landing) İngilizce bırak.
-            5. Giriş sahnesini yaz ve "Ne yapacaksın?" diye bitir.
+            4. **TARİHSEL TUTARLILIK:** Seçilen yılda kim kral ise ondan bahset. Örneğin Ejderhaların Dansı ise ejderhalar vardır, Robert'ın İsyanı ise ejderha yoktur.
+            5. Lore terimlerini (Winterfell, King's Landing) İngilizce bırak.
+            6. Giriş sahnesini seçilen yıla uygun olarak yaz ve "Ne yapacaksın?" diye bitir.
             """
             
             st.session_state.messages.append({"role": "system", "content": system_prompt})
@@ -114,7 +132,7 @@ else:
     # Başlıkta Cinsiyet İkonu
     gender_icon = "♂️" if info.get('gender') == "Erkek" else "♀️"
     st.title(f"🛡️ {info['name']} {gender_icon}")
-    st.caption(f"Savaş: +{info['combat']} | Zeka: +{info['intellect']} | {info['house']}")
+    st.caption(f"📅 {info.get('era')} | Savaş: +{info['combat']} | Zeka: +{info['intellect']} | {info['house']}")
     
     with st.sidebar:
         if st.button("Yeni Oyun"):
