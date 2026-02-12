@@ -255,9 +255,9 @@ else:
         full_msg = f"""{prompt}
         
         [SİSTEM:
-        - OYUNCU: {info['name']} ({info.get('gender')})
+        - OYUNCU: {info['name']}
         - TOPLAM SKOR: {total_score} (Zar {dice_roll} + Bonus {bonus}) {special_note}
-        - Lütfen bu skoru, hedefin zorluğuna göre değerlendir.
+        - Lütfen bu skoru hedefin gücüne göre değerlendir.
         - Dili Türkçe, terimleri İngilizce tut.]"""
         - [DIKKAT] OLULER LISTESI (Bunlar kesinlikle oludur, geri gelemez): {dead_str}]"""
         
@@ -277,6 +277,7 @@ else:
             except Exception as e:
 
                 st.error(f"Hata: {e}")
+
 
 
 
