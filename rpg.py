@@ -179,7 +179,7 @@ else:
                 st.error("Hatalı dosya! Lütfen doğru save dosyasını seç.")
 
         st.markdown("---")
-        st.subheader("💀 Ölüm Defteri")
+        st.subheader("Ölüm Defteri")
         # Ölü Ekleme Kutusu
         dead_input = st.text_input("Ölen Karakter/Yaratık:", placeholder="Örn: Caraxes")
         if st.button("Öldü İşaretle"):
@@ -259,7 +259,7 @@ else:
         - TOPLAM SKOR: {total_score} (Zar {dice_roll} + Bonus {bonus}) {special_note}
         - Lütfen bu skoru, hedefin zorluğuna göre değerlendir.
         - Dili Türkçe, terimleri İngilizce tut.]"""
-        - ⚠️ ÖLÜLER LİSTESİ (Bunlar kesinlikle ölüdür, geri gelemez): {dead_str}]"""
+        - (Dikkat) ÖLÜLER LİSTESİ (Bunlar kesinlikle ölüdür, geri gelemez): {dead_str}]"""
         
         st.session_state.messages.append({"role": "user", "content": full_msg})
 
@@ -277,3 +277,4 @@ else:
             except Exception as e:
 
                 st.error(f"Hata: {e}")
+
