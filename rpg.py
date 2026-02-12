@@ -40,6 +40,27 @@ if not st.session_state.game_started:
     st.title("🛡️ Westeros RPG: Tam Sürüm")
     st.caption("Stat Sistemi | Cinsiyet | Canon Karakter | Acımasız Zar")
 
+    st.markdown("---")
+    st.markdown("### 📂 Kayıtlı Oyunun Var mı?")
+    uploaded_file_start = st.file_uploader("Varsa .json dosyanı buraya bırak", type=["json"], key="start_loader")
+    
+    if uploaded_file_start is not None:
+        if st.button("Oyunu Yükle ve Başlat", type="primary"):
+            try:
+                loaded_data = json.load(uploaded_file_start)
+                # Verileri yükle
+                st.session_state.char_info = loaded_data["char_info"]
+                st.session_state.messages = loaded_data["messages"]
+                st.session_state.dead_list = loaded_data.get("dead_list", []) # Ölüleri de al
+                
+                st.session_state.game_started = True
+                st.success("Oyun bulundu! Başlatılıyor...")
+                time.sleep(1)
+                st.rerun()
+            except Exception as e:
+                st.error("Dosya bozuk veya hatalı.")
+    st.markdown("---")
+    
     col1, col2 = st.columns(2)
     with col1:
         char_name = st.text_input("Karakter Adı", placeholder="Örn: Brienne of Tarth")
@@ -137,16 +158,19 @@ else:
     st.title(f"🛡️ {info['name']} {gender_icon}")
     st.caption(f"📅 {info.get('era')} | Savaş: +{info['combat']} | Zeka: +{info['intellect']} | {info['house']}")
     
+    # --- YENİ SIDEBAR (KAYDET & YÜKLE & YENİ OYUN) ---
     with st.sidebar:
         st.header("💾 Oyun Menüsü")
         
-        # --- OYUNU KAYDET (SAVE) ---
-        # Mevcut durumu bir paket yapıyoruz
+        # --- 1. KAYDETME KISMI ---
+        # Önce mevcut ölü listesini garantiye alalım
+        current_dead = st.session_state.get("dead_list", [])
+        
         save_data = {
             "char_info": st.session_state.char_info,
-            "messages": st.session_state.messages
+            "messages": st.session_state.messages,
+            "dead_list": current_dead  # Ölüleri de kaydediyoruz
         }
-        # Paketi JSON formatına (metne) çeviriyoruz
         json_data = json.dumps(save_data)
         
         st.download_button(
@@ -154,52 +178,60 @@ else:
             data=json_data,
             file_name=f"{info['name']}_save.json",
             mime="application/json",
-            help="Bu dosyayı bilgisayarına indirir. Sonra yükleyerek devam edebilirsin."
+            help="Bu dosyayı indirip sakla. Sonra yükleyerek devam edersin."
         )
 
         st.markdown("---")
-
-        # --- OYUNU YÜKLE (LOAD) ---
-        uploaded_file = st.file_uploader("📂 Oyun Yükle", type=["json"])
         
-        if uploaded_file is not None:
-            try:
-                # Dosyayı okuyoruz
-                loaded_data = json.load(uploaded_file)
-                
-                # Hafızaya geri yüklüyoruz
-                st.session_state.char_info = loaded_data["char_info"]
-                st.session_state.messages = loaded_data["messages"]
-                st.session_state.game_started = True
-                
-                st.success("Oyun yüklendi! Sayfa yenileniyor...")
-                time.sleep(1)
-                st.rerun()
-            except Exception as e:
-                st.error("Hatalı dosya! Lütfen doğru save dosyasını seç.")
-
-        st.markdown("---")
-        st.subheader("Ölüm Defteri")
-        # Ölü Ekleme Kutusu
+        # --- 2. ÖLÜM DEFTERİ KISMI ---
+        st.subheader("💀 Ölüm Defteri")
         dead_input = st.text_input("Ölen Karakter/Yaratık:", placeholder="Örn: Caraxes")
         if st.button("Öldü İşaretle"):
+            # Listeyi ilk kez oluşturuyorsak hata vermesin
+            if "dead_list" not in st.session_state:
+                st.session_state.dead_list = []
+                
             if dead_input and dead_input not in st.session_state.dead_list:
                 st.session_state.dead_list.append(dead_input)
-                st.success(f"{dead_input} listeye eklendi.")
+                st.success(f"{dead_input} eklendi.")
         
         # Listeyi Göster
-        if st.session_state.dead_list:
+        if "dead_list" in st.session_state and st.session_state.dead_list:
             st.markdown("Rehmetliler:")
             for dead in st.session_state.dead_list:
                 st.caption(f"⚰️ {dead}")
             
-            # Listeyi Temizle Butonu (Hata yaparsan diye)
             if st.button("Listeyi Temizle"):
                 st.session_state.dead_list = []
                 st.rerun()
 
         st.markdown("---")
-        if st.button("🗑️ Yeni Oyun (Sıfırla)"):
+
+        # --- 3. YÜKLEME KISMI (BUTONLU ÇÖZÜM) ---
+        st.subheader("📂 Oyun Yükle")
+        uploaded_file = st.file_uploader("Dosyayı Seç", type=["json"], key="sidebar_loader")
+        
+        # BURASI ÖNEMLİ: Dosya seçilince hemen yüklemiyoruz, buton bekliyoruz.
+        if uploaded_file is not None:
+            if st.button("🔄 OYUNU YÜKLE", type="primary"):
+                try:
+                    loaded_data = json.load(uploaded_file)
+                    
+                    # Hafızayı güncelle
+                    st.session_state.char_info = loaded_data["char_info"]
+                    st.session_state.messages = loaded_data["messages"]
+                    st.session_state.dead_list = loaded_data.get("dead_list", [])
+                    st.session_state.game_started = True
+                    
+                    st.success("Başarıyla Yüklendi!")
+                    time.sleep(0.5)
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Dosya hatası: {e}")
+
+        st.markdown("---")
+        # YENİ OYUN BUTONU
+        if st.button("🗑️ Yeni Oyun (Sıfırla)", use_container_width=True):
             st.session_state.clear()
             st.rerun()
 
@@ -277,6 +309,7 @@ else:
             except Exception as e:
 
                 st.error(f"Hata: {e}")
+
 
 
 
