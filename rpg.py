@@ -178,7 +178,7 @@ else:
             except Exception as e:
                 st.error("Hatalı dosya! Lütfen doğru save dosyasını seç.")
 
-st.markdown("---")
+        st.markdown("---")
         st.subheader("💀 Ölüm Defteri")
         # Ölü Ekleme Kutusu
         dead_input = st.text_input("Ölen Karakter/Yaratık:", placeholder="Örn: Caraxes")
@@ -275,4 +275,5 @@ st.markdown("---")
                 st.chat_message("assistant", avatar="🐉").markdown(msg)
                 st.session_state.messages.append({"role": "assistant", "content": msg})
             except Exception as e:
+
                 st.error(f"Hata: {e}")
