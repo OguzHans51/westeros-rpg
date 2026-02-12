@@ -2,6 +2,7 @@ import streamlit as st
 from openai import OpenAI
 import time
 import random
+import json
 
 # ==========================================
 # AYARLAR
@@ -29,6 +30,8 @@ if "game_started" not in st.session_state:
     st.session_state.game_started = False
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "dead_list" not in st.session_state:
+    st.session_state.dead_list = []    
 
 # ==========================================
 # EKRAN 1: KARAKTER YARATMA
@@ -135,7 +138,68 @@ else:
     st.caption(f"📅 {info.get('era')} | Savaş: +{info['combat']} | Zeka: +{info['intellect']} | {info['house']}")
     
     with st.sidebar:
-        if st.button("Yeni Oyun"):
+        st.header("💾 Oyun Menüsü")
+        
+        # --- OYUNU KAYDET (SAVE) ---
+        # Mevcut durumu bir paket yapıyoruz
+        save_data = {
+            "char_info": st.session_state.char_info,
+            "messages": st.session_state.messages
+        }
+        # Paketi JSON formatına (metne) çeviriyoruz
+        json_data = json.dumps(save_data)
+        
+        st.download_button(
+            label="📥 Oyunu Kaydet (İndir)",
+            data=json_data,
+            file_name=f"{info['name']}_save.json",
+            mime="application/json",
+            help="Bu dosyayı bilgisayarına indirir. Sonra yükleyerek devam edebilirsin."
+        )
+
+        st.markdown("---")
+
+        # --- OYUNU YÜKLE (LOAD) ---
+        uploaded_file = st.file_uploader("📂 Oyun Yükle", type=["json"])
+        
+        if uploaded_file is not None:
+            try:
+                # Dosyayı okuyoruz
+                loaded_data = json.load(uploaded_file)
+                
+                # Hafızaya geri yüklüyoruz
+                st.session_state.char_info = loaded_data["char_info"]
+                st.session_state.messages = loaded_data["messages"]
+                st.session_state.game_started = True
+                
+                st.success("Oyun yüklendi! Sayfa yenileniyor...")
+                time.sleep(1)
+                st.rerun()
+            except Exception as e:
+                st.error("Hatalı dosya! Lütfen doğru save dosyasını seç.")
+
+st.markdown("---")
+        st.subheader("💀 Ölüm Defteri")
+        # Ölü Ekleme Kutusu
+        dead_input = st.text_input("Ölen Karakter/Yaratık:", placeholder="Örn: Caraxes")
+        if st.button("Öldü İşaretle"):
+            if dead_input and dead_input not in st.session_state.dead_list:
+                st.session_state.dead_list.append(dead_input)
+                st.success(f"{dead_input} listeye eklendi.")
+        
+        # Listeyi Göster
+        if st.session_state.dead_list:
+            st.markdown("Rehmetliler:")
+            for dead in st.session_state.dead_list:
+                st.caption(f"⚰️ {dead}")
+            
+            # Listeyi Temizle Butonu (Hata yaparsan diye)
+            if st.button("Listeyi Temizle"):
+                st.session_state.dead_list = []
+                st.rerun()
+
+        st.markdown("---")
+        if st.button("🗑️ Yeni Oyun (Sıfırla)"):
             st.session_state.clear()
             st.rerun()
 
@@ -186,6 +250,8 @@ else:
             * **SONUÇ:** :{outcome_color}[**{total_score}**]
             """)
 
+        dead_str = ", ".join(st.session_state.dead_list) if st.session_state.dead_list else "Yok"
+
         full_msg = f"""{prompt}
         
         [SİSTEM:
@@ -193,6 +259,7 @@ else:
         - TOPLAM SKOR: {total_score} (Zar {dice_roll} + Bonus {bonus}) {special_note}
         - Lütfen bu skoru, hedefin zorluğuna göre değerlendir.
         - Dili Türkçe, terimleri İngilizce tut.]"""
+        - ⚠️ ÖLÜLER LİSTESİ (Bunlar kesinlikle ölüdür, geri gelemez): {dead_str}]"""
         
         st.session_state.messages.append({"role": "user", "content": full_msg})
 
