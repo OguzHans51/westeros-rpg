@@ -258,7 +258,7 @@ else:
         - OYUNCU: {info['name']}
         - TOPLAM SKOR: {total_score} (Zar {dice_roll} + Bonus {bonus}) {special_note}
         - Lütfen bu skoru hedefin gücüne göre değerlendir.
-        - Dili Türkçe, terimleri İngilizce tut.]"""
+        - Dili Türkçe, terimleri İngilizce tut.]
         - [DIKKAT] OLULER LISTESI (Bunlar kesinlikle oludur, geri gelemez): {dead_str}]"""
         
         st.session_state.messages.append({"role": "user", "content": full_msg})
@@ -277,6 +277,7 @@ else:
             except Exception as e:
 
                 st.error(f"Hata: {e}")
+
 
 
 
