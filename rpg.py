@@ -163,7 +163,7 @@ if not st.session_state.game_started:
             
             st.session_state.messages.append({"role": "system", "content": system_prompt})
             
-            with st.spinner("Portal açılıyor..."):
+            with st.spinner("Hikayen başlıyor..."):
                 try:
                     response = client.chat.completions.create(
                         model="deepseek-chat",
