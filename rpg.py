@@ -77,6 +77,23 @@ if not st.session_state.game_started:
         * **👁️ Gözlem:** Etrafı inceleme, tuzakları fark etme, insanları değerlendirme vb. *(Bonus: Algı)*
         * **💬 İkna:** Yalan söyleme, pazarlık, korkutma, aşk itirafı :P vb. *(Ortalama: Zeka + Karizma)*
         * **🗣️ Diyalog:** Sadece sohbet etme. Hikaye ilerlemez, zaman akmaz.
+
+        ### ☠️ Ölüm Defteri *(Hikaye İçi)*
+        * **Kullanım:** Hikayenizde bir karakter öldüyse onu buraya not alın. *(Ai üzerinden zaman geçince geri getirebiliyor)*
+        * **Not:** Eğer ölümü hikaye için önemliyse Hikaye Günlüğüne kimin öldürdüğünü ve ölüm şeklini yazabilirsiniz.*(Siz öldürdüyseniz evlatları sizden intikam isteyebilir)*
+
+        ### 📜 Önemli Notlar/Günlük *(Hikaye İçi)*
+        * **Kullanım:** Hikayede geleceğe dair bir görev ya da o an ileride hatırlanması gereken önemli bir başarı elde ettiyseniz yazın. *(Yazmazsanız Ai bunu unutabilir)*
+        * **Kullanım 2:** Öldürdüğünüz kişileri nasıl öldürdüğünüzü ve yakınlarının tepkilerini yazın. *(Örneğin Mace Tyrell sizin tarafınızdan öldürülürse oğulları intikam isteyecektir)*
+        * **Kullanım 3:** Kurduğunuz dostlukları ve kazandığınız düşmanları da buraya not alın.
+
+        ### 💾 Kayıt Alma/Kayıt Yükleme
+        * **Telefonda:** Sol üst köşede '>>' gördüğünüz işaret yan menüyü açacaktır. Ölüm Defteri, Günlük gibi kısımlar da oradadır.
+        * **Telefonda:** Oyunu Kaydet tuşuna basınca .json bir dosya indirecektir. Bu sizin save dosyanız. Oyun yükle dediğinizde İndirilenlerinizden bu dosyayı seçerseniz kayıtlı kısma dönersiniz.
+        * **Bilgisayarda:** Yan menü otomatik olarak açıktır. Geri kalan tüm adımlar aynıdır.
+
+        ### 🌒 Darkmode
+        * **Nasıl Seçilir:** Sağ üst üç nokta üst üsteye basın. Settings deyin. Oradan seçebilirsiniz.
         """)
 
     st.markdown("---")
@@ -158,7 +175,11 @@ if not st.session_state.game_started:
                - Düşük skor (10 altı): Başarısızlık.
                - Yüksek skor (16+): Başarı.
                - Eğer oyuncu "Diyalog" modundaysa zar atılmaz, sadece sohbet et.
-            5. Giriş sahnesini seçilen yıla uygun olarak yaz ve "Ne yapıyorsun?" diye bitir.
+            5. **COĞRAFYA VE YÖNLER (ÇOK ÖNEMLİ):** - Westeros haritasına sadık kal.
+               - SUR (THE WALL) EN KUZEYDEDİR. Sur'a gitmek için her zaman "Kuzeye" gidilir.
+               - Dorne gibi yerler GÜNEYDEDİR.
+               - Yönleri karıştırma, oyuncu Winterfell'deyse Sur onun KUZEYİNDE kalır.
+            6. Giriş sahnesini seçilen yıla uygun olarak yaz ve "Ne yapıyorsun?" diye bitir.
             """
             
             st.session_state.messages.append({"role": "system", "content": system_prompt})
@@ -227,7 +248,7 @@ else:
                 st.success(f"{dead_input} eklendi.")
         
         if "dead_list" in st.session_state and st.session_state.dead_list:
-            st.markdown("Rehmetliler:")
+            st.markdown("Ölüler:")
             for dead in st.session_state.dead_list:
                 st.caption(f"⚰️ {dead}")
             
@@ -236,6 +257,25 @@ else:
                 st.rerun()
 
         st.markdown("---")
+
+        st.markdown("---")
+        st.subheader("📜 Önemli Notlar / Günlük")
+        st.caption("AI buraya yazdığın şeyleri ASLA unutmaz. Önemli olayları, kurduğun ittifakları buraya not al.")
+        
+        # Eğer session state'de yoksa oluştur
+        if "memory_log" not in st.session_state:
+            st.session_state.memory_log = ""
+            
+        # Not Kutusu
+        memory_input = st.text_area(
+            "Hatırlatıcılar:", 
+            value=st.session_state.memory_log, 
+            height=150,
+            placeholder="Örn: Stannis Baratheon ile müttefik oldum. Ona gemi sözü verdim."
+        )
+        
+        # Değişikliği kaydet
+        st.session_state.memory_log = memory_input
 
         # --- 3. YÜKLEME KISMI ---
         st.subheader("📂 Oyun Yükle")
@@ -355,6 +395,7 @@ else:
 
         # Ölüleri metne çevir
         dead_str = ", ".join(st.session_state.dead_list) if st.session_state.dead_list else "Yok"
+        memory_str = st.session_state.memory_log if st.session_state.memory_log else "Yok"
 
         # Yapay Zekaya Giden Gizli Mesaj
         full_msg = f"""{prompt}
@@ -365,13 +406,14 @@ else:
         - SKOR: {total_score} (Zar {dice_roll} + Bonus {bonus}) {special_note}
         - EK TALİMAT: {hidden_instruction}
         - DÖNEM: {info.get('era')}
-        - [DIKKAT] OLULER LISTESI (Bunlar kesinlikle oludur, geri gelemez): {dead_str}]"""
+        - [DİKKAT] ÖLÜLER LİSTESİ (Bunlar kesinlikle ölüdür): {dead_str}
+        - [ÇOK ÖNEMLİ - OYUNCU GÜNLÜĞÜ/HAFIZA]: {memory_str} (Bu notlardaki olayları ve ilişkileri ASLA unutma, bunlar yaşanmış gerçeklerdir.)]"""
         
         st.session_state.messages.append({"role": "user", "content": full_msg})
 
         with st.spinner("GM düşünüyor..."):
             try:
-                history = [st.session_state.messages[0]] + st.session_state.messages[-12:]
+                history = [st.session_state.messages[0]] + st.session_state.messages[-25:]
                 response = client.chat.completions.create(
                     model="deepseek-chat",
                     messages=history,
@@ -382,4 +424,5 @@ else:
                 st.session_state.messages.append({"role": "assistant", "content": msg})
             except Exception as e:
                 st.error(f"Hata: {e}")
+
 
