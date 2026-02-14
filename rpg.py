@@ -262,10 +262,21 @@ else:
     # --- MESAJLAR ---
     for message in st.session_state.messages:
         if message["role"] == "system": continue
+        
         avatar = "🐉" if message["role"] == "assistant" else "🗡️"
-        content = message["content"].split("[SİSTEM:")[0].strip()
+        
+        # İçeriği alıyoruz
+        raw_content = message["content"]
+        
+        # EĞER BU BİR OYUNCU MESAJIYSA VE İÇİNDE GİZLİ SİSTEM BİLGİSİ VARSA GİZLE
+        if "[SİSTEM BİLGİSİ:" in raw_content:
+            # Sadece [SİSTEM BİLGİSİ: yazan yere kadar olan kısmı al (yani senin yazdığın)
+            display_content = raw_content.split("[SİSTEM BİLGİSİ:")[0].strip()
+        else:
+            display_content = raw_content
+            
         with st.chat_message(message["role"], avatar=avatar):
-            st.markdown(content)
+            st.markdown(display_content)
 
     # --- INPUT VE BUTONLAR ---
     
@@ -371,3 +382,4 @@ else:
                 st.session_state.messages.append({"role": "assistant", "content": msg})
             except Exception as e:
                 st.error(f"Hata: {e}")
+
