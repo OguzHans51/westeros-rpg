@@ -413,7 +413,7 @@ else:
 
         with st.spinner("GM düşünüyor..."):
             try:
-                history = [st.session_state.messages[0]] + st.session_state.messages[-25:]
+                history = [st.session_state.messages[0]] + st.session_state.messages[-14:]
                 response = client.chat.completions.create(
                     model="deepseek-chat",
                     messages=history,
@@ -424,5 +424,6 @@ else:
                 st.session_state.messages.append({"role": "assistant", "content": msg})
             except Exception as e:
                 st.error(f"Hata: {e}")
+
 
 
